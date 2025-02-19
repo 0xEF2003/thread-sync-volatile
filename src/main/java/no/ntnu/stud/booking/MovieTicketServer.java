@@ -3,10 +3,10 @@ package no.ntnu.stud.booking;
 public class MovieTicketServer {
 
     private String movieName;
-    private int someNumber;
+    private int availableTickets;
 
-    public MovieTicketServer(String movieName, int someNumber) {
+    public MovieTicketServer(String movieName, int availableTickets) {
         this.movieName = movieName;
-        this.someNumber = someNumber;
+        this.availableTickets = availableTickets;
     }
 }
