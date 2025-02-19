@@ -11,4 +11,14 @@ public class MovieTicketClient extends Thread {
         this.name = name;
         this.orderedTickets = orderedTickets;
     }
+
+    public synchronized String bookTickets() {
+        return server.bookTickets(orderedTickets);
+    }
+
+    @Override
+    public void run() {
+        int availableTickets = server.getAvailableTickets();
+        System.out.println(Thread.currentThread().getName() + " Available tickets before: " + availableTickets + " Available tickets left: " + bookTickets());
+    }
 }
