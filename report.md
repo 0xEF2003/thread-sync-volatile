@@ -37,9 +37,9 @@ Test 3:
 * Ilaria: before = 7 after = 5
 * Sam: before = 5 after = 2
 
-The output does not make sense if we were ordering tickets in real life, but it makes very much sense taken into consideration that this is multithreading:
-
-Adding delay due to the results not showing the expected output:
+Adding delay due to the results being *way* too perfect for a real multithreading scenario.
+This is likely because our operations are so light they don't happen at the same time.
+New round of tests following:
 
 Test 1:
 
@@ -62,6 +62,11 @@ Test 3:
 * Sam: before = 10 after = -2
 * Xiangming: before = 10 after = 3
 * Ilaria: before = 10 after = -2
+
+The output does not make sense if we were ordering tickets in real life, but it makes very much sense taken into consideration that this is (naive) multithreading.
+Two things (at least) contribute to making this confusing.
+Since all threads start simultaneously and don't finish quickly enough to update `availableTickets` before another thread starts, all threads believe there are 10 tickets available (which is technically true but not intuitive).
+Then since everyone believes there are 10 tickets available, there's no li
 
 ```java
 // Creating 4 threads
