@@ -19,7 +19,7 @@ This is a simple project aiming at synchronizing threads and using the volatile 
 ### The changes you have to make to test all conditions that are mentioned in the report
 
 #### With synchronization and without volatile
-1. Run the program as is (no changes needed)
+1. Run the program as is (no change needed)
 
 #### With synchronization and volatile
 1. Open the `MovieTicketServer.java` file
