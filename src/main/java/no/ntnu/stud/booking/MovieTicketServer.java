@@ -10,7 +10,7 @@ public class MovieTicketServer {
         this.availableTickets = availableTickets;
     }
 
-    public void bookTickets(int orderedTickets) {
+    public synchronized void bookTickets(int orderedTickets) {
         if (availableTickets >= orderedTickets) {
             availableTickets -= orderedTickets;
         }
