@@ -10,11 +10,13 @@ public class MovieTicketServer {
         this.availableTickets = availableTickets;
     }
 
-    public synchronized String bookTickets(int orderedTickets) {
-        int before = availableTickets;
+    public void bookTickets(int orderedTickets) {
         if (availableTickets >= orderedTickets) {
             availableTickets -= orderedTickets;
         }
-      return " Available tickets before: " + before + " Available tickets left: " + availableTickets;
+    }
+
+    public int getAvailableTickets() {
+        return availableTickets;
     }
 }

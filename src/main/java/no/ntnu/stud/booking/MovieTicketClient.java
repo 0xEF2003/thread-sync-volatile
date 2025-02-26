@@ -14,7 +14,9 @@ public class MovieTicketClient extends Thread {
 
     @Override
     public void run() {
-        String bookTickets = server.bookTickets(orderedTickets);
-        System.out.println("- " + Thread.currentThread().getName() + bookTickets);
+        int before = server.getAvailableTickets();
+        server.bookTickets(orderedTickets);
+        int after = server.getAvailableTickets();
+        System.out.println(name + ": before = " + before + " after = " + after);
     }
 }
