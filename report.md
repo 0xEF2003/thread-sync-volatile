@@ -19,16 +19,16 @@ Threads are always started in numeric order.
 Test 1:
 
 * Xiangming: before = 10 after = 7
+* Andreas: before = 5 after = 1
+* Sam: before = 1 after = 1
 * Ilaria: before = 7 after = 5
-* Sam: before = 5 after = 2
-* Andreas: before = 2 after = 2
 
 Test 2:
 
+* Andreas: before = 4 after = 0
+* Ilaria: before = 0 after = 0
 * Xiangming: before = 10 after = 7
-* Sam: before = 5 after = 2
-* Ilaria: before = 7 after = 5
-* Andreas: before = 2 after = 2
+* Sam: before = 7 after = 4
 
 Test 3:
 
@@ -38,6 +38,30 @@ Test 3:
 * Sam: before = 5 after = 2
 
 The output does not make sense if we were ordering tickets in real life, but it makes very much sense taken into consideration that this is multithreading:
+
+Adding delay due to the results not showing the expected output:
+
+Test 1:
+
+* Andreas: before = 10 after = 1
+* Ilaria: before = 10 after = 8
+* Xiangming: before = 10 after = 1
+* Sam: before = 10 after = 1
+
+Test 2:
+
+* Sam: before = 10 after = 6
+* Ilaria: before = 10 after = 3
+* Xiangming: before = 10 after = 3
+* Andreas: before = 10 after = 6
+
+
+Test 3:
+
+* Andreas: before = 10 after = 0
+* Sam: before = 10 after = -2
+* Xiangming: before = 10 after = 3
+* Ilaria: before = 10 after = -2
 
 ```java
 // Creating 4 threads

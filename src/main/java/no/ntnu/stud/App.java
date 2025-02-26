@@ -18,7 +18,7 @@ public class App
         Thread t2 = new MovieTicketClient(movieTicketServer, "Ilaria", 2);
         Thread t3 = new MovieTicketClient(movieTicketServer, "Sam", 3);
         Thread t4 = new MovieTicketClient(movieTicketServer, "Andreas", 4);
-        
+
         // Starting all threads
         t1.start();
         t2.start();

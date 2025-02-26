@@ -15,8 +15,13 @@ public class MovieTicketClient extends Thread {
     @Override
     public void run() {
         int before = server.getAvailableTickets();
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         server.bookTickets(orderedTickets);
         int after = server.getAvailableTickets();
-        System.out.println(name + ": before = " + before + " after = " + after);
+        System.out.println("* "+ name + ": before = " + before + " after = " + after);
     }
 }
