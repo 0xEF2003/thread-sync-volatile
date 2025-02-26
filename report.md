@@ -1,5 +1,5 @@
 ## What does volatile do?
-It ensures that the value of a *field* marked `volatile` is always read from and written to the *main memory* (not from the thread cache).
+It ensures that the value of a *field* marked `volatile` is always read from and written to the *main memory* (not from and to the thread cache).
 It can still be read and written to asynchronously by any thread.
 
 ## What does synchronized do?
@@ -15,6 +15,15 @@ This is without volatile and synchronized keywords.
 Thread "order" is displayed in the order they finish (not the order they started).
 Threads are always started in numeric order.
 
+```java
+// Creating 4 threads
+Thread t1 = new MovieTicketClient(movieTicketServer, "Xiangming", 3);
+Thread t2 = new MovieTicketClient(movieTicketServer, "Ilaria", 2);
+Thread t3 = new MovieTicketClient(movieTicketServer, "Sam", 3);
+Thread t4 = new MovieTicketClient(movieTicketServer, "Andreas", 4);
+```
+
+In all our tests Xiangming subtracts three tickets, Ilaria subtracts two tickets, Sam subtracts 3 tickets, and Andreas (attempts to) subtract 4 tickets.
 
 Test 1:
 
@@ -38,52 +47,50 @@ Test 3:
 * Sam: before = 5 after = 2
 
 Adding delay due to the results being *way* too perfect for a real multithreading scenario.
+Even though the order is a bit weird, the math always adds up.
 This is likely because our operations are so light they don't happen at the same time.
-New round of tests following:
+A new round of tests whith delay produced the following result: (we only take the time to explain one)
 
 Test 1:
 
-* Andreas: before = 10 after = 1
-* Ilaria: before = 10 after = 8
+* Andreas: before = 10 after = 4
 * Xiangming: before = 10 after = 1
-* Sam: before = 10 after = 1
-
-Test 2:
-
+* Ilaria: before = 10 after = 4
 * Sam: before = 10 after = 6
-* Ilaria: before = 10 after = 3
-* Xiangming: before = 10 after = 3
-* Andreas: before = 10 after = 6
-
-
-Test 3:
-
-* Andreas: before = 10 after = 0
-* Sam: before = 10 after = -2
-* Xiangming: before = 10 after = 3
-* Ilaria: before = 10 after = -2
 
 The output does not make sense if we were ordering tickets in real life, but it makes very much sense taken into consideration that this is (naive) multithreading.
 Two things (at least) contribute to making this confusing.
 Since all threads start simultaneously and don't finish quickly enough to update `availableTickets` before another thread starts, all threads believe there are 10 tickets available (which is technically true but not intuitive).
-Then since everyone believes there are 10 tickets available, there's no li
+Furthermore, the order things happen in can be very unintuitive.
+Here is a attempt at making sense of the output:
 
-```java
-// Creating 4 threads
-Thread t1 = new MovieTicketClient(movieTicketServer, "Xiangming", 3);
-Thread t2 = new MovieTicketClient(movieTicketServer, "Ilaria", 2);
-Thread t3 = new MovieTicketClient(movieTicketServer, "Sam", 3);
-Thread t4 = new MovieTicketClient(movieTicketServer, "Andreas", 4);
-```
+1. Everyone asks server for available tickets simultaneously (availableTickets = 10)
+4. Sam finishes booking 3 tickets (availableTickets = 7)
+5. Andreas finishes booking 4 tickets (availableTickets = 6)
+6. Sam asks server for tickets left (availableTickets = 6)
+8. Ilaria finishes booking 2 tickets (avalableTickets = 4)
+9. Ilaria asks server for tickets left (availableTickets  = 4)
+10. Andreas asks server for tickets left (availableTickets = 4)
+12. Xiangming finishes booking 3 tickets (availableTickets = 1)
+13. Xiangming asks server for tickets left (availableTickets = 1)
 
-In all our tests Xiangming subtracts three tickets, Ilaria subtracts two tickets, Sam subtracts 3 tickets, and Andreas (attempts to) subtract 4 tickets.
-What does not "make sense" is the values each thread starts with (the thread cache).
+Here we see that the threads override one another, creating inconsistent results where the math doesn't add up.
+One thing that battles our intuition here is that this is a *non-volatile* field.
+Why would we not expect "consistent" results like the following?
 
+* Andreas: before = 10 after = 6
+* Xiangming: before = 10 after = 7
+* Ilaria: before = 10 after = 8
+* Sam: before = 10 after = 7
+
+Here they would all start with caching the value 10 and then subtract their respective numbers from it without reference to main memory.
+This tells us that there perhaps is some ambiguity as to how the flow between thread cache and the main memory works.
 
 ## Change the “Available tickets” shared variable to “volatile”
 
 Here we are noting what differences it makes when the shared variable is prefixed with the keyword `volatile`
 This means we have modified the following line in `MovieTickerServer.java`:
+
 ```java
 // original line of code
 private int availableTickets;
@@ -94,28 +101,30 @@ private volatile int availableTickets;
 
 Test 1:
 
-* Xiangming: before = 10 after = 7
-* Ilaria: before = 7 after = 5
-* Sam: before = 5 after = 2
-* Andreas: before = 2 after = 2
+* Andreas: before = 10 after = 5 ordered = 4
+* Ilaria: before = 10 after = 8 ordered = 2
+* Sam: before = 10 after = 5 ordered = 3
+* Xiangming: before = 10 after = 2 ordered = 3
 
-Test 2:
+Explanation attempt:
 
-* Xiangming: before = 10 after = 7
-* Ilaria: before = 7 after = 5
-* Andreas: before = 2 after = 2
-* Sam: before = 5 after = 2
+* Ilaria starts booking 2 tickets (availableTickets = 10)
+* Ilaria finishes booking 2 tickets (availableTickets = 8)
+* Ilaria asks server for tickets left (availableTickets = 8)
+* Sam begins booking 3 tickets (availableTickets = 8)
+* Andreas begins booking 4 tickets (availableTickets = 8)
+* Andreas finishes booking (availableTickets = 4)
+* Sam finishes booking 3 tickets (availableTickets = 5)
+* Andreas asks server for tickets left (availableTickets = 5)
+* Sam asks server for tickets left (availableTickets = 5)
+* Xiangming begins booking 3 tickets (availableTickets = 5)
+* Xiangming finishes booking 3 tickets (availableTickets = 2)
+* Xianming asks server for tickets left (availableTickets = 2)
 
-Test 3:
 
-* Xiangming: before = 10 after = 7
-* Ilaria: before = 4 after = 2
-* Sam: before = 7 after = 4
-* Andreas: before = 2 after = 2
-
-We do not see any meaningful difference for our specific use-case.
-The `volatile` keyword would have made a difference for let's say a application where threads needed to access a shared date variable (if the threads run for longer than one day).
-Then the date variable would not have been cached (and not updated) and instead read directly from the main memory where it is updated.
+We do not see any meaningful difference compared to the previous test for our specific use-case.
+But, we actually expect this kind of output *here* (and not in the previous test).
+We still see threads overriding one another because of timing.
 
 
 ## Add thread synchronization and note the difference
@@ -133,67 +142,52 @@ public synchronized void bookTickets(int orderedTickets) {
 
 Test 1:
 
-* Xiangming: before = 10 after = 7
-* Sam: before = 5 after = 2
-* Ilaria: before = 7 after = 5
-* Andreas: before = 2 after = 2
+* Sam: before = 10 after = 1 ordered = 3
+* Andreas: before = 10 after = 4 ordered = 4
+* Xiangming: before = 10 after = 1 ordered = 3
+* Ilaria: before = 10 after = 8 ordered = 2
 
 Test 2:
 
-* Xiangming: before = 10 after = 7
-* Ilaria: before = 7 after = 5
-* Sam: before = 5 after = 2
-* Andreas: before = 2 after = 2
+* Ilaria: before = 10 after = 5 ordered = 2
+* Andreas: before = 10 after = 2 ordered = 4
+* Sam: before = 10 after = 7 ordered = 3
+* Xiangming: before = 10 after = 2 ordered = 3
 
 Test 3:
+* Andreas: before = 10 after = 2 ordered = 4
+* Ilaria: before = 10 after = 8 ordered = 2
+* Xiangming: before = 10 after = 5 ordered = 3
+* Sam: before = 10 after = 2 ordered = 3
 
-* Xiangming: before = 10 after = 7
-* Andreas: before = 2 after = 2
-* Sam: before = 7 after = 4
-* Ilaria: before = 4 after = 2
-
+We will not do a equally in-depth analysis of this test as the preceeding (for obvious reasons).
+However we want to note that there's no cases of threads overriding one another here.
+Since the code-block that updates `availableTickets` has been forced to run by one thread at a time, the math now adds up.
 
 
 ## Remove the volatile keyword and note the difference
-Now we are performing the tests where we don't use volatile, but we still use synchronization.
 
-Even though we have removed the volatile keyword, we still cannot see any signs of volatility taking effect.
-If a result for example the result after Thread-2 in test 1 were to be 7 as well as Thread-0, 
-then we would be able to conclude that volatility had taken effect. 
-We don't see any results that would indicate that the threads are not reading from the main memory.
+* Sam: before = 10 after = 7 ordered = 3
+* Xiangming: before = 10 after = 4 ordered = 3
+* Ilaria: before = 10 after = 2 ordered = 2
+* Andreas: before = 10 after = 2 ordered = 4
 
-Test 1:
+* Andreas: before = 10 after = 1 ordered = 4
+* Xiangming: before = 10 after = 7 ordered = 3
+* Sam: before = 10 after = 1 ordered = 3
+* Ilaria: before = 10 after = 5 ordered = 2
 
-- Thread-0 Available tickets before: 10 Available tickets left: 7
-- Thread-2 Available tickets before: 7 Available tickets left: 4
-- Thread-1 Available tickets before: 4 Available tickets left: 2
-- Thread-3 Available tickets before: 2 Available tickets left: 2
+* Ilaria: before = 10 after = 1 ordered = 2
+* Andreas: before = 10 after = 6 ordered = 4
+* Xiangming: before = 10 after = 3 ordered = 3
+* Sam: before = 10 after = 1 ordered = 3
 
-
-Test 2:
-
-- Thread-0 Available tickets before: 10 Available tickets left: 7
-- Thread-1 Available tickets before: 7 Available tickets left: 5
-- Thread-2 Available tickets before: 5 Available tickets left: 2
-- Thread-3 Available tickets before: 2 Available tickets left: 2
-
-Test 3:
-
-- Thread-0 Available tickets before: 10 Available tickets left: 7
-- Thread-2 Available tickets before: 7 Available tickets left: 4
-- Thread-3 Available tickets before: 4 Available tickets left: 0
-- Thread-1 Available tickets before: 0 Available tickets left: 0
-
-Test 4:
-
-- Thread-0 Available tickets before: 10 Available tickets left: 7
-- Thread-2 Available tickets before: 7 Available tickets left: 4
-- Thread-1 Available tickets before: 4 Available tickets left: 2
-- Thread-3 Available tickets before: 2 Available tickets left: 2
+Similarly to the foregoing test, the math adds up in all cases.
+We are unable to see any difference after we removed the `volatile` keyword.
 
 ## Conclusion
 During these tests we could clearly see which tests were affected by synchronization,
-however, we were not able to see any signs of volatility taking effect.
+However, we failed to note a difference between when a field was marked `volatile` and when it was not. 
 This might be because we didn't test enough, or some other pre-existing conditions that we are not aware of.
 
 Overall the group is satisfied with the results of the tests, and we are confident that we have understood the concepts of synchronization and volatility.
