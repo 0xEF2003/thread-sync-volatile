@@ -11,13 +11,10 @@ public class MovieTicketServer {
     }
 
     public synchronized String bookTickets(int orderedTickets) {
+        int before = availableTickets;
         if (availableTickets >= orderedTickets) {
             availableTickets -= orderedTickets;
         }
-      return Integer.toString(availableTickets);
-    }
-
-    public int getAvailableTickets() {
-        return availableTickets;
+      return " Available tickets before: " + before + " Available tickets left: " + availableTickets;
     }
 }

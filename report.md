@@ -10,6 +10,8 @@ Test 1:
 1. Thread: 5 before, 2 after
 1. Thread: 2 before, 0 after
 
+(Potential math error. 10 - 3 = 7, 7 - 2 = 5, 5 - 3 = 2, 2 - 4 = 0? Supposed to be 2 still.)
+
 Test 2:
 
 1. Thread: 10 before, 7 after
