@@ -1,3 +1,12 @@
+## What does volatile do?
+The volatile keyword ensures that the process of reading and writing a variable will always be based on the latests result of an operation performed by a thread.
+It ensures that the value of the variable is always read from the main memory and not from the cache.
+
+## What does synchronized do?
+The synchronized keyword ensures that only one thread can access a shared resource at a time.
+This is done by locking the resource, and unlocking it when the thread is complete.
+
+
 ## Make note of the "Available Tickets" value for each thread
 
 This is without volatile and synchronized keywords.
